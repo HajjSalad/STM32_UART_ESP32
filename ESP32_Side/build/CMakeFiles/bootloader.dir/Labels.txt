@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/CMakeFiles/bootloader
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/CMakeFiles/bootloader.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/CMakeFiles/bootloader-complete.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

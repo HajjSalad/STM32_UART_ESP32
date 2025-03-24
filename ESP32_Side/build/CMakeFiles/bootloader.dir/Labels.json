@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/CMakeFiles/bootloader"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/CMakeFiles/bootloader.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/CMakeFiles/bootloader-complete.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
+		},
+		{
+			"file" : "/Users/abdirahmanhajj/esp/work/STM32_UART_ESP32/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"bootloader"
+		],
+		"name" : "bootloader"
+	}
+}
