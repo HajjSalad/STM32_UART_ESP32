@@ -4,6 +4,7 @@
 *.exe
 
 # Ignore build directories
+/ESP32_Side/build/
 /build/
 /dist/
 /Debug/
