@@ -16,4 +16,4 @@ Limitations:
 Interrupt-driven handshake mechanism coming soon...
 
 #### Version 1.0 Demo
-![Demo](./uartVid.gif) 
+![Demo](./uart.gif) 
