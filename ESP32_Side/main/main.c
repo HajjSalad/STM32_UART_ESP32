@@ -67,46 +67,8 @@ static void rx_task()
             printf("Timeout: No response from STM32\n");
         }
 
-        // Send ready
-        // const char *ready = "READY\n\r";
-        // uart_write_bytes(UART_NUM_2, ready, strlen(ready));
-
-        // // Receive data
-        // int length = uart_read_bytes(UART_NUM_2, rx_data, sizeof(rx_data) - 1, 100 / portTICK_PERIOD_MS);
-        // if (length > 0) {
-        //     rx_data[length] = '\0';  // Null-terminate the string
-        //     printf("Received: %s\n", rx_data);
-        // }
-
-        // Send Received
-        // const char *receipt = "RECEIPT\n\r";
-        // uart_write_bytes(UART_NUM_2, receipt, strlen(receipt));
-
-        // //int length = uart_read_bytes(uart_num, rx_data, sizeof(rx_data) - 1, 100 / portTICK_PERIOD_MS);
-        // int length = uart_read_bytes(UART_NUM_2, rx_data, sizeof(rx_data) - 1, 100 / portTICK_PERIOD_MS);
-        // if (length > 0) {
-        //     rx_data[length] = '\0';  // Null-terminate the string
-        //     printf("Received: %s\n", rx_data);
-
-        //     // Send acknowledgment "OK"
-        //     const char *ack = "OK";
-        //     uart_write_bytes(UART_NUM_2, ack, strlen(ack));
-        // }
-
         vTaskDelay(pdMS_TO_TICKS(1000));  // Small delay to prevent CPU overload
     }
-
-    // const uart_port_t uart_num = UART_NUM;
-    // int length = 0;
-    // uint8_t rx_data[128]="\0";
-
-    // while (1)
-    // {
-    //     uart_get_buffered_data_len(uart_num, (size_t *)&length); // Read data string length
-    //     uart_read_bytes(uart_num, rx_data, length, 100); // Read data string from the buffer
-    //     if (length>1) printf("rx_data - %.*s", length, rx_data);
-    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    // }
 }
 
 void app_main()
