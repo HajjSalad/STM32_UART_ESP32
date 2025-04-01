@@ -1,0 +1,28 @@
+# Ignore object files and binaries
+*.o
+*.out
+*.exe
+
+# Ignore build directories
+/ESP32_Side/build/
+/build/
+/dist/
+/Debug/
+/STM32_Side/Drivers/
+/STM32_Side/Debug
+
+# Ignore logs
+*.log
+
+# Ignore editor-specific files
+*.swp
+.vscode/
+.idea/
+.DS_Store
+
+# Ignore IDE-specific project settings
+.settings/
+*.mxproject
+*.cproject
+*.project
+*.launch
