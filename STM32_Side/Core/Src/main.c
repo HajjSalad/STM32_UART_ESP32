@@ -107,9 +107,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	HAL_UART_Transmit(&huart1, (uint8_t *)tx_data, sizeof(tx_data), HAL_MAX_DELAY);
-	HAL_UART_Transmit(&huart2, (uint8_t *)tx_sent, sizeof(tx_sent), HAL_MAX_DELAY);
-	HAL_Delay(1000);
+  HAL_UART_Transmit(&huart1, (uint8_t *)tx_data, sizeof(tx_data), HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart2, (uint8_t *)tx_sent, sizeof(tx_sent), HAL_MAX_DELAY);
+  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }

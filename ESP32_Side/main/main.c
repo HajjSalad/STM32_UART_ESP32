@@ -42,56 +42,17 @@ void init_RS232()
 
 static void rx_task()
 {
-    uint8_t rx_data[40];                     // Buffer for incoming data
-    char ack[] = "ACK";
-    char receipt[] = "RECEIPT";
+    int length = 0;
+    uint8_t rx_data[128]="\0";
 
-    while (1) {
-        // Wait for "READY" from STM32
-        int length = uart_read_bytes(UART_NUM_2, rx_data, sizeof(rx_data) - 1, 1000 / portTICK_PERIOD_MS);
-        if (length > 0) {
-            rx_data[length] = '\0';
-            //printf("Received: %s\n", rx_data);
-
-            // Check if STM32 sent "READY"
-            if (strcmp((char *)rx_data, "READY") == 0) {
-                // Send "ACK" to STM32
-                uart_write_bytes(UART_NUM_2, ack, strlen(ack));
-                printf("Send ACK\n");
-            }
-        } else {
-            printf("Timeout: No READY from STM32\n");
-        }
-        printf("\n");
-        vTaskDelay(pdMS_TO_TICKS(1000));
+    while (1)
+    {
+        uart_get_buffered_data_len(UART_NUM_2, (size_t *)&length); // Read data string length
+        uart_read_bytes(UART_NUM_2, rx_data, length, 100); // Read data string from the buffer
+        if (length>1) printf("rx_data - %.*s", length, rx_data);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
-
-
-
-
-
-        // // Send "READY" to STM32
-        // uart_write_bytes(UART_NUM_2, ready_msg, strlen(ready_msg));
-        // printf("Sent: READY\n");
-
-        // // Small delay before reading to prevent conflicts
-        // vTaskDelay(pdMS_TO_TICKS(100));
-
-        // // Wait for STM32 response
-        // int length = uart_read_bytes(UART_NUM_2, rx_data, sizeof(rx_data) - 1, 1000 / portTICK_PERIOD_MS);
-        // if (length > 0) {
-        //     rx_data[length] = '\0';  // Null-terminate
-        //     printf("Received: %s\n", rx_data);
-
-        //     // Send "ACK" to STM32
-        //     uart_write_bytes(UART_NUM_2, ack_msg, strlen(ack_msg));
-        //     printf("Sent: ACK\n");
-        // } else {
-        //     printf("Timeout: No response from STM32\n");
-        // }
-
-        // vTaskDelay(pdMS_TO_TICKS(1000));  // Small delay to prevent CPU overload
 
 void app_main()
 {
@@ -101,43 +62,3 @@ void app_main()
     init_RS232();
     xTaskCreate(rx_task, "uart_rx_task", 1024 * 2, NULL, configMAX_PRIORITIES - 1, NULL);
 }
-
-
-// while (1) {
-//     //memset(rx_data, 0, sizeof(rx_data));  // Clear buffer before reading
-//     // Wait for "READY" from STM32
-//     int length = uart_read_bytes(UART_NUM_2, rx_data, sizeof(rx_data) - 1, 1000 / portTICK_PERIOD_MS);
-//     if (length > 0) {
-//         rx_data[length] = '\0';
-//         //printf("Received: %s\n", rx_data);
-
-//         // Check if STM32 sent "READY"
-//         if (strcmp((char *)rx_data, "READY") == 0) {
-//             // Send "ACK" to STM32
-//             uart_write_bytes(UART_NUM_2, ack, strlen(ack));
-
-//             vTaskDelay(pdMS_TO_TICKS(50));
-
-//             memset(rx_data, 0, sizeof(rx_data));  // Clear buffer before reading
-//             // Wait for data from STM32
-//             length = uart_read_bytes(UART_NUM_2, rx_data, sizeof(rx_data) - 1, 1000 / portTICK_PERIOD_MS);
-//             if (length > 0) {
-//                 rx_data[length] = '\0';
-                
-//                 // **Ensure the data is NOT "READY" before sending "RECEIPT"**
-//                 if (strcmp((char *)rx_data, "READY") != 0) {
-//                     printf("Received Data: %s\n", rx_data);
-
-//                     // Send "RECEIPT"
-//                     uart_write_bytes(UART_NUM_2, receipt, strlen(receipt));
-//                 } 
-//             } else {
-//                 printf("Timeout: No data received from STM32\n");
-//             }
-//         }
-//     } else {
-//         printf("Timeout: No READY from STM32\n");
-//     }
-//     printf("\n");
-//     vTaskDelay(pdMS_TO_TICKS(1000));
-// }
