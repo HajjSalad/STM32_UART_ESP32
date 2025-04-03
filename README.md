@@ -13,20 +13,25 @@ Limitations:
 This approach enhances reliability by implementing a timeout-based handshake to coordinate data transfer between STM32 and ESP32.
 
 Handshake Sequence:
-1. STM32 sends READY to ESP32.
-2. ESP32 responds with OK upon receiving READY.
+1. STM32 sends `READY` to ESP32.
+2. ESP32 responds with `OK` upon receiving READY.
 3. STM32 sends data to ESP32.
-4. ESP32 acknowledges receipt with ACK.
+4. ESP32 acknowledges receipt with `ACK`.
 5. STM32 confirms completion, ensuring reliable transmission.
+6. 
+```
+STM32:  Send READY to ESP32...           ESP32:  Received: READY?
+        OK received from ESP32...                Responded with: OK
+        Send Message to ESP32...                 Received: Message from STM32
+        ACK received from ESP32...               Responded with: ACK
+        Transmission complete
+```
 
-| STM32                          | ESP32                          |
-|--------------------------------|--------------------------------|
-| Send READY to ESP32...         | Received: READY?               |
-| OK received from ESP32...      | Responded with: OK             |
-| Send Message to ESP32...       | Received: Message from STM32   |
-| ACK received from ESP32...     | Responded with: ACK            |
-| Transmission complete          |                                |
 
 
-#### Version 1.0 Demo
+#### Demo
+Basic UART
+![Demo](./uart.gif) 
+
+Handshake UART
 ![Demo](./uart.gif) 
