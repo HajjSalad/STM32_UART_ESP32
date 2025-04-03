@@ -21,11 +21,11 @@ Handshake Sequence:
 
 #### Tools & Software Used
 STM32 Development:
-        - STM32CubeIDE (with HAL for configuration)
-        - ST-Link Debugger
+ - STM32CubeIDE (with HAL for configuration)
+ - ST-Link Debugger
 ESP32 Development:
-        - ESP-IDF
-        - VS Code (with UART Debugging)
+ - ESP-IDF
+ - VS Code (with UART Debugging)
 Hardware:
         - STM32 MCU
         - ESP32 MCU
