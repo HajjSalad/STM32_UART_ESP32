@@ -18,7 +18,19 @@ Handshake Sequence:
 3. STM32 sends data to ESP32.
 4. ESP32 acknowledges receipt with `ACK`.
 5. STM32 confirms completion, ensuring reliable transmission.
- 
+
+#### Tools & Software Used
+STM32 Development:
+- STM32CubeIDE (with HAL for configuration)
+- ST-Link Debugger
+ESP32 Development:
+- ESP-IDF
+- VS Code (with UART Debugging)
+Hardware:
+- STM32 MCU
+- ESP32 MCU
+
+#### Example Communication:
 ```
 STM32:  Send READY to ESP32...           ESP32:  Received: READY?
         OK received from ESP32...                Responded with: OK
