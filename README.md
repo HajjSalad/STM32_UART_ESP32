@@ -18,7 +18,7 @@ Handshake Sequence:
 3. STM32 sends data to ESP32.
 4. ESP32 acknowledges receipt with `ACK`.
 5. STM32 confirms completion, ensuring reliable transmission.
-6. 
+ 
 ```
 STM32:  Send READY to ESP32...           ESP32:  Received: READY?
         OK received from ESP32...                Responded with: OK
@@ -27,11 +27,9 @@ STM32:  Send READY to ESP32...           ESP32:  Received: READY?
         Transmission complete
 ```
 
-
-
 #### Demo
 Basic UART
-![Demo](./uart.gif) 
+![Demo](./uart_basic.gif) 
 
 Handshake UART
-![Demo](./uart.gif) 
+![Demo](./uart_handshake.gif) 
