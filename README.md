@@ -24,6 +24,7 @@ Handshake Sequence:
  - STM32CubeIDE (with HAL for configuration)
  - ST-Link Debugger
 **ESP32 Development:**
+ESP32 Development:
  - ESP-IDF
  - VS Code (with UART Debugging)
 **Hardware:**
