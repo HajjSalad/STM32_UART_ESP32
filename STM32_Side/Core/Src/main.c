@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -31,6 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define BUF_SIZE 40
+#define TIMEOUT_MS 1000
 
 /* USER CODE END PD */
 
@@ -44,9 +47,23 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-char tx_start[25] = "*** Program Start ***\n\r";
-char tx_data[30] = "Message from STM32 ... \r\n";
-char tx_sent[30] = "Message sent to ESP32 ... \n\r";
+
+const uint8_t TX_START[] = "*** Program Start ***\n\r";
+const uint8_t TX_DATA[] = "Message from STM32";
+const uint8_t TX_READY[] = "READY?";
+
+const char TX_SEND_READY[] = "Send READY to ESP32...\n\r";
+const char TX_SEND_DATA[] = "Send Message to ESP32...\n\r";
+
+const uint8_t TX_OK_TIMEOUT[] = "Timeout waiting for OK.\n\r";
+const uint8_t TX_ACK_TIMEOUT[] = "Timeout waiting for ACK.\n\r";
+const uint8_t TX_OK_RECEIVED[] = "OK received from ESP32...\n\r";
+const uint8_t TX_ACK_RECEIVED[] = "ACK received from ESP32...\n\r";
+const uint8_t TX_UNKNOWN_RECEIVED[] = "Unknown response received...\n\r";
+const uint8_t TX_COMPLETE[] = "Transmission complete\n\n\r";
+
+static uint8_t rx_buffer[BUF_SIZE];
+static uint16_t rx_len = 0;
 
 /* USER CODE END PV */
 
@@ -61,6 +78,45 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+static void uart_transmit(UART_HandleTypeDef *huart, const uint8_t *message, size_t length) {
+    HAL_UART_Transmit(huart, (uint8_t *)message, length, HAL_MAX_DELAY);
+}
+
+static HAL_StatusTypeDef uart_receive_response(const char *expected_response, size_t response_len) {
+    HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle(&huart1, rx_buffer, BUF_SIZE, &rx_len, TIMEOUT_MS);
+
+    if (status == HAL_OK && strncmp((char *)rx_buffer, expected_response, response_len) == 0) {
+        return HAL_OK;
+    }
+
+    return status;
+}
+
+void send_to_esp32() {
+  // Send READY message
+  uart_transmit(&huart2, (uint8_t *)TX_SEND_READY, strlen(TX_SEND_READY));
+  uart_transmit(&huart1, TX_READY, sizeof(TX_READY) - 1);
+
+  // Wait for "OK" from ESP32
+  if (uart_receive_response("OK", 2) == HAL_OK) {
+    uart_transmit(&huart2, TX_OK_RECEIVED, sizeof(TX_OK_RECEIVED));
+
+    // Send data message
+    uart_transmit(&huart2, (uint8_t *)TX_SEND_DATA, strlen(TX_SEND_DATA));
+    uart_transmit(&huart1, TX_DATA, sizeof(TX_DATA) - 1);
+
+    // Wait for "ACK" from ESP32
+    if (uart_receive_response("ACK", 3) == HAL_OK) {
+      uart_transmit(&huart2, TX_ACK_RECEIVED, sizeof(TX_ACK_RECEIVED));
+      uart_transmit(&huart2, TX_COMPLETE, sizeof(TX_COMPLETE));
+    } else {
+      uart_transmit(&huart2, TX_ACK_TIMEOUT, sizeof(TX_ACK_TIMEOUT));
+    }
+  } else {
+    uart_transmit(&huart2, TX_OK_TIMEOUT, sizeof(TX_OK_TIMEOUT));
+  }
+}
 
 /* USER CODE END 0 */
 
@@ -95,8 +151,9 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
+
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit(&huart2, (uint8_t *)tx_start, sizeof(tx_start), HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart2, TX_START, sizeof(TX_START), HAL_MAX_DELAY);
 
   /* USER CODE END 2 */
 
@@ -104,12 +161,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+  send_to_esp32();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  HAL_UART_Transmit(&huart1, (uint8_t *)tx_data, sizeof(tx_data), HAL_MAX_DELAY);
-  HAL_UART_Transmit(&huart2, (uint8_t *)tx_sent, sizeof(tx_sent), HAL_MAX_DELAY);
-  HAL_Delay(1000);
+  HAL_Delay(3000);
   }
   /* USER CODE END 3 */
 }
