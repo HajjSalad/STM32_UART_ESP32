@@ -32,7 +32,7 @@ Hardware:
  - STM32 MCU
  - ESP32 MCU
 
-#### Example Communication:
+#### Communication Flow:
 ```
 STM32:  Send READY to ESP32...           ESP32:  Received: READY?
         OK received from ESP32...                Responded with: OK
