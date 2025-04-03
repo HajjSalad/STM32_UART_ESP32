@@ -22,7 +22,7 @@ Handshake Sequence:
 #### Tools & Software Used
 STM32 Development:
  - STM32CubeIDE (with HAL for configuration)
- - ST-Link Debugger<br>
+ - ST-Link Debugger\n
 ESP32 Development:
  - ESP-IDF
  - VS Code (with UART Debugging)
