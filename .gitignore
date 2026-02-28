@@ -2,6 +2,7 @@
 *.o
 *.out
 *.exe
+*.map
 
 # Ignore build directories
 /ESP32_Side/build/
@@ -10,6 +11,8 @@
 /Debug/
 /STM32_Side/Drivers/
 /STM32_Side/Debug
+/STM32_Side/Build/
+
 
 # Ignore logs
 *.log
