@@ -1,6 +1,6 @@
 /**
  * @file uart2.c
- * @brief UART drive implementation
+ * @brief UART2 driver implementation
  * 
  * Provides low-level UART2 initialization and transmit/receive functionality.
 */

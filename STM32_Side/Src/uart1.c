@@ -1,12 +1,13 @@
 /**
- * @file uart2.c
- * @brief UART drive implementation
+ * @file uart1.c
+ * @brief UART1 driver implementation
  * 
  * Provides low-level UART1 initialization and transmit/receive functionality.
 */
 
 #include "stm32f446xx.h"
 #include "systick.h"
+#include "uart_rx.h"
 #include "uart.h"
 
 #include <stdio.h>
@@ -18,14 +19,13 @@
 #define CR1_TE				(1U<<3)
 #define CR1_RE				(1U<<2)
 #define CR1_UE				(1U<<13)
+#define CR1_RXNE			(1U<<5)
 #define SR_TXE				(1U<<7)
-#define SR_RXNE				(1U<<5)
 #define SR_ORE              (1U<<3)
 
 #define SYS_FREQ        	((uint32_t) 16000000)
 #define APB2_CLK        	SYS_FREQ
 #define UART_BAUDRATE   	((uint32_t) 115200)
-#define UART_TIMEOUT_MS		1000U
 
 // Function Prototypes
 static void 	uart_set_baudrate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t BaudRate);
@@ -57,27 +57,9 @@ void uart1_init(void)
 	uart_set_baudrate(USART1, APB2_CLK, UART_BAUDRATE);
 
 	USART1->CR1 = (CR1_TE | CR1_RE);	// Configure the transfer direction
+	USART1->CR1 |= CR1_RXNE;       		// Enable RXNE interrupt
+	NVIC_EnableIRQ(USART1_IRQn);     	// Enable USART1 in NVIC
 	USART1->CR1 |= CR1_UE;				// Enable USART Module
-}
-
-/**
- * @brief Transmit a null-terminated string over UART1.
- * 
- * Appends a newline character after the string so the ESP32 can 
- * detect the end of the message.
- * 
- * @param str Pointer to a null-terminated string to transmit.
-*/
-void uart1_write_string(const char *str) 
-{
-	if(str == NULL) return;
-
-    while (*str != '\0') 
-	{
-        uart1_write((int)*str);
-        str++;
-    }
-    uart1_write('\n');  // Terminator the ESP32 can detect
 }
 
 /**
@@ -85,91 +67,25 @@ void uart1_write_string(const char *str)
  * 
  * Blocks until the transmit register is empty.
  * 
- * @param ch  Byte to transmit.
+ * @param byte  Byte to transmit.
 */
-void uart1_write(int ch) 
+void uart1_write(uint8_t byte) 
 {
-	while(!(USART1->SR & SR_TXE)){};		// Make sure the transmit data register is empty.
-	USART1->DR = ((uint32_t)ch & 0xFF);		// Write to transmit data register
-}
+	while(!(USART1->SR & SR_TXE)){};	// Make sure the transmit data register is empty.
+	USART1->DR = (byte);				// Write to transmit data register
+}													
 
 /**
- * @brief Receive a single character from UART1 with a 1s timeout.
- *
- * Checks and clears any overrun error before waiting for incoming data.
- *
- * @param ch  Pointer to store the received byte
+ * @brief USART1 interrupt service routine
  * 
- * @return 0 on success, -1 on failure
+ * Fires on every received byte.
+ * Reads the byte from the data register and hands it off to RX layer for processing.
 */
-int uart1_read(char *ch) 
+void USART1_IRQHandler(void)
 {
-	if (ch == NULL) return -1;
-
-    // Check for overrun first and clear it
-    if (USART1->SR & SR_ORE) {
-        (void)USART1->SR;
-        (void)USART1->DR;
-    }
-
-	uint32_t start = systickGetMillis();
-    while(!(USART1->SR & SR_RXNE))
-	{
-		if ((systickGetMillis() - start) >= UART_TIMEOUT_MS)
-		{
-			return -1;		// Timeout
-		}
-	};		
-	
-	*ch = (char)(USART1->DR & 0xFF);
-	return 0;
-}
-
-/**
- * @brief Read characters from UART1 into a buffer until '\n' or buffer full.
- * @param buf       Buffer to store received string.
- * @param max_len   Maximum number of bytes to read (including null terminator).
- * @return Number of characters read (excluding null terminator).
-*/
-uint16_t uart1_read_string(char *buf, uint16_t max_len)
-{
-    if (buf == NULL || max_len == 0) return 0;
-
-    uint16_t i = 0;
-	uint32_t start = systickGetMillis();
-
-    while (i < (max_len - 1))
-    {
-        char c;
-		if (uart1_read(&c) != 0)
-			return -1;
-
-        if (c == '\n' || c == '\r') break;
-        buf[i++] = c;
-
-		if ((systickGetMillis() - start) >= UART_TIMEOUT_MS)
-			return -1;
-    }
-
-    buf[i] = '\0';
-    return i;
-}
-
-/**
- * @brief Read a response from UART1 and compare it to an expected string.
- * @param expected  The string to compare against.
- * @return 0 if match, -1 if mismatch.
-*/
-int uart1_expect(const char *expected)
-{
-    if (expected == NULL) return -1;
-
-    char rx_buf[32] = {0};
-
-    if (uart1_read_string(rx_buf, sizeof(rx_buf)) < 0)
-        return -1;  // Timeout, don't bother comparing
-
-    return (strncmp(rx_buf, expected, strlen(expected)) == 0) ? 0 : -1;
+	if (USART1->SR & CR1_RXNE) {
+		uart_rx_push_byte((uint8_t)(USART1->DR & 0xFF));
+	}
 }
 
 /** @brief Configure the baud rate for the USART peripheral */

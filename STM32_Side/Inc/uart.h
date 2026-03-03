@@ -3,24 +3,17 @@
 
 /**
  * @file uart.h
- * @brief Public API for UART2 peripheral.
+ * @brief Public API for UART1 and UART2 peripheral.
 */
 
 #include <stdio.h>
 #include <stdint.h>
 
-/** @brief Format for printf */
-#define LOG(fmt, ...)  printf( (fmt "\n\r"), ##__VA_ARGS__)
+// UART1 Function Prototypes
+void uart1_init(void);
+void uart1_write(uint8_t byte);
 
-// Function Prototypes
+// UART2 Function Prototypes
 void uart2_init(void);
 void uart2_write(int ch);
-
-void uart1_init(void);
-void uart1_write(int ch);
-void uart1_write_string(const char *str);
-int uart1_read(char *ch);
-uint16_t uart1_read_string(char *buf, uint16_t max_len);
-int uart1_expect(const char *expected);
-
 #endif /* UART_H_ */
