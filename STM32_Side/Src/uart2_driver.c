@@ -1,5 +1,5 @@
 /**
- * @file uart2.c
+ * @file uart2_driver.c
  * @brief UART2 driver implementation
  * 
  * Provides low-level UART2 initialization and transmit/receive functionality.
@@ -7,7 +7,7 @@
 
 #include "stm32f446xx.h"
 
-#include "uart.h"
+#include "uart_driver.h"
 
 #define GPIOAEN				(1U<<0)
 #define UART2EN				(1U<<17)

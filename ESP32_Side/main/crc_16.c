@@ -1,10 +1,10 @@
 /**
  * @file  crc_16.c
- * @brief CRC-16 computation for UART packet integrity validation.
+ * @brief 
 */
 
 #include <stdint.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 /**
  * @brief Compute CRC-16 checksum over a byte buffer.

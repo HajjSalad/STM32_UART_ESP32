@@ -5,9 +5,11 @@
 
 #include "stm32f446xx.h"
 #include <string.h>
-#include "uart.h"
 #include "systick.h"
-
+#include "uart_tx.h"
+#include "uart_rx.h"
+#include "uart_driver.h"
+#include "shared_resources.h"
 
 int main(void) 
 {
@@ -20,6 +22,5 @@ int main(void)
     while (1) 
     {
         uart_tx_process();      // drive TX state machine
-        uart_rx_process();      // drive RX state machine
     }
 }

@@ -8,7 +8,7 @@
  * busy-wait delays.
 */
 
-#include "uart.h"
+#include "uart_driver.h"
 #include "systick.h"
 
 #include <stdio.h>

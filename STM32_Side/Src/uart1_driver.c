@@ -8,7 +8,7 @@
 #include "stm32f446xx.h"
 #include "systick.h"
 #include "uart_rx.h"
-#include "uart.h"
+#include "uart_driver.h"
 
 #include <stdio.h>
 #include <string.h>

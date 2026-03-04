@@ -10,10 +10,13 @@ BUILD_DIR = Build
 
 # Source files directory
 C_SOURCES = Src/main.c \
-			Src/uart1.c \
-			Src/uart2.c \
+			Src/uart1_driver.c \
+			Src/uart2_driver.c \
 			Src/systick.c \
-            Src/syscalls.c
+            Src/syscalls.c \
+			Src/uart_tx.c \
+			Src/uart_rx.c \
+			Src/crc_16.c 
 
 # ASM sources
 ASM_SOURCES = Startup/startup_stm32f446retx.s

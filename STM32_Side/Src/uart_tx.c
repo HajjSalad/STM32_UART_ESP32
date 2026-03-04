@@ -6,7 +6,10 @@
 #include "stm32f446xx.h"
 #include <string.h>
 
+#include "crc_16.h"
 #include "uart_tx.h"
+#include "systick.h"
+#include "uart_driver.h"
 #include "shared_resources.h"
 
 // String for testing
@@ -19,14 +22,23 @@ static UART_TX_Context tx_ctx = {
     .retry_count = 0,
 };
 
-void send_handshake_request(uint8_t seq)
+static void send_handshake_request(uint8_t seq)
 {
     UART_Handshake_Packet_t pkt;
+
     pkt.sof     = SOF_BYTE;
     pkt.seq_num = seq;
     pkt.type    = PKT_HANDSHAKE_REQ;
     pkt.crc     = compute_crc((uint8_t*)&pkt, sizeof(pkt) - 3);
     pkt.eof     = EOF_BYTE;
+
+    LOG("Sending HANDSHAKE_REQ: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X",
+        pkt.sof,
+        pkt.seq_num,
+        pkt.type,
+        pkt.crc >> 8,
+        pkt.crc & 0xFF,
+        pkt.eof);
 
     uart1_write(pkt.sof);
     uart1_write(pkt.seq_num);
@@ -36,21 +48,32 @@ void send_handshake_request(uint8_t seq)
     uart1_write(pkt.eof);
 }
 
-void send_data_packet(uint8_t seq)
+static void send_data_packet(uint8_t seq)
 {
     UART_Data_Packet_t pkt;
+
     pkt.sof      = SOF_BYTE;
     pkt.seq_num  = seq;
-    pkt.length   = sizeof(TX_DATA) -1;
     pkt.type     = PKT_DATA;
+    pkt.length   = sizeof(TX_DATA) - 1;
     memcpy(pkt.payload, TX_DATA, pkt.length);
     pkt.crc      = compute_crc((uint8_t*)&pkt, sizeof(pkt) - 3);
     pkt.eof      = EOF_BYTE;
 
+    LOG("Sending DATA: 0x%02X 0x%02X 0x%02X 0x%02X [%d payload bytes] 0x%02X 0x%02X 0x%02X",
+        pkt.sof,
+        pkt.seq_num,
+        pkt.type,
+        pkt.length,
+        pkt.length,
+        pkt.crc >> 8,
+        pkt.crc & 0xFF,
+        pkt.eof);
+
     uart1_write(pkt.sof);
     uart1_write(pkt.seq_num);
-    uart1_write(pkt.length);
     uart1_write(pkt.type);
+    uart1_write(pkt.length);
     for (uint8_t i=0; i < pkt.length; i++) {
         uart1_write(pkt.payload[i]);
     }
@@ -59,9 +82,14 @@ void send_data_packet(uint8_t seq)
     uart1_write(pkt.eof);
 }
 
-void uart_tx_set_flag(uint8_t flag_type)
+void uart_tx_set_flag(UART_PacketType_t type)
 {
-    
+    switch (type)
+    {
+        case PKT_HANDSHAKE_ACK: tx_ctx.flag_handshake_ack = 1; break;
+        case PKT_DATA_ACK:      tx_ctx.flag_data_ack      = 1; break;
+        default: break;
+    }
 }
 
 void uart_tx_process(void)
@@ -74,55 +102,59 @@ void uart_tx_process(void)
             tx_ctx.tx_timestamp = systickGetMillis();       // Get timestamp
             tx_ctx.retry_count++;                           // Increment retry count
             tx_ctx.state = STATE_WAIT_HANDSHAKE_ACK;        // Move to wait for ACK
+            LOG("HANDSHAKE_REQ sent. Waiting for ACK... (attempt %d)", tx_ctx.retry_count);
             break;
         case STATE_WAIT_HANDSHAKE_ACK:
-            if (flag_handshake_ack) {
-                flag_handshake_ack = 0;
-                retry_count = 0;
-                state = STATE_SEND_DATA;
+            if (tx_ctx.flag_handshake_ack) {
+                tx_ctx.flag_handshake_ack = 0;
+                tx_ctx.retry_count = 0;
+                tx_ctx.state = STATE_SEND_DATA;
+                LOG("HANDSHAKE_ACK received");
             }
-            else if ((systickGetMillis() - tx_timestamp) >= UART_TIMEOUT_MS)  {
-                if (retry_count < RETRY_MAX) {
-                    state = STATE_SEND_HANDSHAKE;
+            else if ((systickGetMillis() - tx_ctx.tx_timestamp) >= UART_TIMEOUT_MS)  
+            {
+                if (tx_ctx.retry_count < RETRY_MAX) {
+                    tx_ctx.state = STATE_SEND_HANDSHAKE;
+                    LOG("HANDSHAKE_ACK timeout. Retrying...");
                 } else {
-                    state = STATE_IDLE;
-                    LOG("Handshake failed after %d retries", retry_count);
-                    retry_count = 0;
+                    tx_ctx.retry_count = 0;
+                    tx_ctx.state = STATE_IDLE;
+                    LOG("HANDSHAKE failed after %d attempts. Going IDLE", RETRY_MAX);
                 }
             }
             break;
         case STATE_SEND_DATA:
-            send_data_packet(seq++);
-            retry_count++;
-            tx_timestamp = systickGetMillis();
-            state = STATE_WAIT_DATA_ACK;
+            send_data_packet(tx_ctx.seq++);
+            tx_ctx.retry_count++;
+            tx_ctx.tx_timestamp = systickGetMillis();
+            tx_ctx.state = STATE_WAIT_DATA_ACK;
+            LOG("DATA sent. Waiting for ACK... (attempt %d)", tx_ctx.retry_count);
             break;
         case STATE_WAIT_DATA_ACK:
-            if (flag_data_ack) {
-                flag_data_ack = 0;
-                state = STATE_IDLE;
-            } else if ((systickGetMillis() - tx_timestamp) >= UART_TIMEOUT_MS) {
-                if (retry_count < RETRY_MAX) {
-                    state = STATE_SEND_DATA;
+            if (tx_ctx.flag_data_ack) {
+                tx_ctx.flag_data_ack = 0;
+                tx_ctx.state = STATE_IDLE;
+                LOG("DATA_ACK received. Cycle complete");
+            } else if ((systickGetMillis() - tx_ctx.tx_timestamp) >= UART_TIMEOUT_MS) 
+            {
+                LOG("Waiting for data ACK. Retry: %d", tx_ctx.retry_count);
+                if (tx_ctx.retry_count < RETRY_MAX) {
+                    tx_ctx.state = STATE_SEND_DATA;
+                    LOG("DATA_ACK timeout. Retrying...");
                 } else {
-                    state = STATE_IDLE;
-                    LOG("Send data failed after %d retries", retry_count);
-                    retry_count = 0;
+                    tx_ctx.retry_count = 0;
+                    tx_ctx.state = STATE_IDLE;
+                    LOG("DATA send failed after %d attempts. Going IDLE", RETRY_MAX);
                 }
             }
             break;
         case STATE_IDLE:
-            systickDelayMs(3000);
-            seq = 0;
-            retry_count = 0;
-            state = STATE_SEND_HANDSHAKE;
+            systickDelayMs(5000);
+            tx_ctx.seq = 0;
+            tx_ctx.retry_count = 0;
+            tx_ctx.state = STATE_SEND_HANDSHAKE;
+            LOG("\n--- Starting new cycle ---");
             break;
     }
 }
-// Process incoming bytes
-        if (rx_ready) {
-            rx_ready = 0;
-            process_rx(rx_buffer, rx_index);
-        }
-
         

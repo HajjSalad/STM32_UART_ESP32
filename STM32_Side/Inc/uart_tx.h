@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "shared_resources.h"
 
 // STM32 side - high bit 0
 #define SEQ_STM32_BASE  0x00
@@ -37,8 +38,8 @@ typedef struct {
 typedef struct {
     uint8_t  sof;
     uint8_t  seq_num;
-    uint8_t  length;
     uint8_t  type;
+    uint8_t  length;
     uint8_t  payload[MAX_PAYLOAD_SIZE];
     uint16_t crc;
     uint8_t  eof;
@@ -54,7 +55,7 @@ typedef struct {
 } UART_TX_Context;
 
 // Function Prototypes
-void uart_tx_set_flag(uint8_t flag_type);
-
+void uart_tx_set_flag(UART_PacketType_t type);
+void uart_tx_process(void);
 
 #endif      // UART_TX_H_
