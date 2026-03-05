@@ -53,6 +53,16 @@ static void send_handshake_ack(uint8_t seq)
     pkt.eof     = EOF_BYTE;
 
     uart_write_bytes(UART_NUM2, (uint8_t*)&pkt, sizeof(pkt));
+
+    printf("[0x%02X] TX HANDSHAKE_ACK  : 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", 
+        rx_ctx.seq,
+        pkt.sof,
+        pkt.seq_num,
+        pkt.type,
+        pkt.crc >> 8,
+        pkt.crc & 0xFF,
+        pkt.eof
+    );
 }
 
 static void send_data_ack(uint8_t seq)
@@ -66,6 +76,16 @@ static void send_data_ack(uint8_t seq)
     pkt.eof     = EOF_BYTE;
 
     uart_write_bytes(UART_NUM2, (uint8_t*)&pkt, sizeof(pkt));
+
+    printf("[0x%02X] TX DATA_ACK       : 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", 
+        rx_ctx.seq,
+        pkt.sof,
+        pkt.seq_num,
+        pkt.type,
+        pkt.crc >> 8,
+        pkt.crc & 0xFF,
+        pkt.eof
+    );
 }
 
 static void rxtx_task(void *pvParameters)
@@ -87,19 +107,20 @@ static void rxtx_task(void *pvParameters)
 
                     if (rx_ctx.flag_handshake_ack) {
                         rx_ctx.flag_handshake_ack = 0;
-                        printf("HANDSHAKE_REQ received [%d bytes]: ", len);
+                        printf("--- Starting new cycle ---\n");
+                        printf("[0x%02X] RX HANDSHAKE_REQ  : ", rx_ctx.seq);
                         for (int i = 0; i < len; i++) printf("0x%02X ", buf[i]);
                         printf("\n");
                         send_handshake_ack(rx_ctx.seq);
-                        printf("HANDSHAKE_ACK sent. seq=0x%02X\n\n", rx_ctx.seq);
                     }
                     else if (rx_ctx.flag_data_ack) {
                         rx_ctx.flag_data_ack = 0;
-                        printf("DATA received [%d bytes]: ", len);
-                        for (int i = 0; i < len; i++) printf("0x%02X ", buf[i]);
-                        printf("\n");
+                        uint8_t payload_len = buf[3];
+                        printf("[0x%02X] RX DATA           : 0x%02X 0x%02X 0x%02X 0x%02X [%d payload bytes] 0x%02X 0x%02X 0x%02X\n",
+                            rx_ctx.seq,buf[0],buf[1],buf[2],buf[3],payload_len,buf[4 + payload_len],
+                            buf[4 + payload_len + 1],buf[4 + payload_len + 2]);
                         send_data_ack(rx_ctx.seq);
-                        printf("DATA_ACK sent. seq=0x%02X\n\n", rx_ctx.seq);
+                        printf("--- Cycle complete -------\n\n");
                     }
                     else {
                         printf("Unknown packet received:\n");

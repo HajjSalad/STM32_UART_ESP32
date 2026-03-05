@@ -32,7 +32,8 @@ static void send_handshake_request(uint8_t seq)
     pkt.crc     = compute_crc((uint8_t*)&pkt, sizeof(pkt) - 3);
     pkt.eof     = EOF_BYTE;
 
-    LOG("Sending HANDSHAKE_REQ: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X",
+    LOG("[0x%02X] TX HANDSHAKE_REQ  : 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X",
+        tx_ctx.seq,
         pkt.sof,
         pkt.seq_num,
         pkt.type,
@@ -60,7 +61,8 @@ static void send_data_packet(uint8_t seq)
     pkt.crc      = compute_crc((uint8_t*)&pkt, sizeof(pkt) - 3);
     pkt.eof      = EOF_BYTE;
 
-    LOG("Sending DATA: 0x%02X 0x%02X 0x%02X 0x%02X [%d payload bytes] 0x%02X 0x%02X 0x%02X",
+    LOG("[0x%02X] TX DATA           : 0x%02X 0x%02X 0x%02X 0x%02X [%d payload bytes] 0x%02X 0x%02X 0x%02X",
+        tx_ctx.seq,
         pkt.sof,
         pkt.seq_num,
         pkt.type,
@@ -98,59 +100,57 @@ void uart_tx_process(void)
     {
         case STATE_SEND_HANDSHAKE:
             send_handshake_request(tx_ctx.seq);
-            tx_ctx.seq = (tx_ctx.seq + 1) & 0x7F;           // Increment seq number
             tx_ctx.tx_timestamp = systickGetMillis();       // Get timestamp
             tx_ctx.retry_count++;                           // Increment retry count
             tx_ctx.state = STATE_WAIT_HANDSHAKE_ACK;        // Move to wait for ACK
-            LOG("HANDSHAKE_REQ sent. Waiting for ACK... (attempt %d)", tx_ctx.retry_count);
             break;
         case STATE_WAIT_HANDSHAKE_ACK:
             if (tx_ctx.flag_handshake_ack) {
                 tx_ctx.flag_handshake_ack = 0;
                 tx_ctx.retry_count = 0;
                 tx_ctx.state = STATE_SEND_DATA;
-                LOG("HANDSHAKE_ACK received");
+                LOG("[0x%02X] RX HANDSHAKE_ACK  : Handshake ACK received", tx_ctx.seq);
             }
             else if ((systickGetMillis() - tx_ctx.tx_timestamp) >= UART_TIMEOUT_MS)  
             {
                 if (tx_ctx.retry_count < RETRY_MAX) {
                     tx_ctx.state = STATE_SEND_HANDSHAKE;
-                    LOG("HANDSHAKE_ACK timeout. Retrying...");
+                    LOG("[0x%02X]HANDSHAKE_ACK timeout. Retrying...", tx_ctx.seq);
                 } else {
                     tx_ctx.retry_count = 0;
                     tx_ctx.state = STATE_IDLE;
-                    LOG("HANDSHAKE failed after %d attempts. Going IDLE", RETRY_MAX);
+                    LOG("[0x%02X]HANDSHAKE failed after %d attempts. Going IDLE", tx_ctx.seq, RETRY_MAX);
                 }
             }
             break;
         case STATE_SEND_DATA:
-            send_data_packet(tx_ctx.seq++);
+            send_data_packet(tx_ctx.seq);
             tx_ctx.retry_count++;
             tx_ctx.tx_timestamp = systickGetMillis();
             tx_ctx.state = STATE_WAIT_DATA_ACK;
-            LOG("DATA sent. Waiting for ACK... (attempt %d)", tx_ctx.retry_count);
             break;
         case STATE_WAIT_DATA_ACK:
             if (tx_ctx.flag_data_ack) {
                 tx_ctx.flag_data_ack = 0;
                 tx_ctx.state = STATE_IDLE;
-                LOG("DATA_ACK received. Cycle complete");
+                LOG("[0x%02X] RX DATA_ACK       : Data ACK received", tx_ctx.seq);
+                LOG("--- Cycle complete -------");
             } else if ((systickGetMillis() - tx_ctx.tx_timestamp) >= UART_TIMEOUT_MS) 
             {
-                LOG("Waiting for data ACK. Retry: %d", tx_ctx.retry_count);
+                LOG("[0x%02X]Waiting for data ACK. Retry: %d", tx_ctx.seq, tx_ctx.retry_count);
                 if (tx_ctx.retry_count < RETRY_MAX) {
                     tx_ctx.state = STATE_SEND_DATA;
-                    LOG("DATA_ACK timeout. Retrying...");
+                    LOG("[0x%02X]DATA_ACK timeout. Retrying...", tx_ctx.seq);
                 } else {
                     tx_ctx.retry_count = 0;
                     tx_ctx.state = STATE_IDLE;
-                    LOG("DATA send failed after %d attempts. Going IDLE", RETRY_MAX);
+                    LOG("[0x%02X]DATA send failed after %d attempts. Going IDLE", tx_ctx.seq, RETRY_MAX);
                 }
             }
             break;
         case STATE_IDLE:
             systickDelayMs(5000);
-            tx_ctx.seq = 0;
+            tx_ctx.seq = (tx_ctx.seq + 1) & 0x7F;           // Increment seq number
             tx_ctx.retry_count = 0;
             tx_ctx.state = STATE_SEND_HANDSHAKE;
             LOG("\n--- Starting new cycle ---");
