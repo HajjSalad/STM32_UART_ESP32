@@ -7,14 +7,14 @@
 */
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "driver/uart.h"
-#include "esp_system.h"
+#include "esp_err.h"
 
 #define UART_2_TX           17
 #define UART_2_RX           16
 #define UART_NUM2           UART_NUM_2
 #define BUF_SIZE            1024
+#define EOF_BYTE            0x55
 
 extern QueueHandle_t uart_2_queue;
 

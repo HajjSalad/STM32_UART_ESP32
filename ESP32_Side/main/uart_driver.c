@@ -1,18 +1,16 @@
 /**
- * @file uart2_driver.c
- * @brief
- * 
+ * @file  uart_driver.c
+ * @brief UART2 peripheral driver for STM32 communication
 */
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "driver/uart.h"
-#include "esp_system.h"
-#include "string.h"
-#include "stdio.h"
+#include "esp_log.h"
+#include "esp_err.h"
 
 #include "uart_driver.h"
-#include "uart_rxtx_task.h"
+
+static const char *TAG = "UART2";
 
 QueueHandle_t uart_2_queue;
 
@@ -28,28 +26,39 @@ esp_err_t uart2_init(void)
 
     esp_err_t ret;
     
-    // Configure parameters
+    // 1. Configure UART2 parameters
     ret = uart_param_config(UART_NUM2, &uart_config);
-    if (ret != ESP_OK) return ret;
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "UART param config failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
-    // Assign TX, RX pins
+    // 2. Assign TX/RX pins
     ret = uart_set_pin(UART_NUM2, UART_2_TX, UART_2_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    if (ret != ESP_OK) return ret;
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "UART set pin failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
-    // Install UART driver
+    // 3. Install UART driver with event queue
     ret = uart_driver_install(UART_NUM2, BUF_SIZE, BUF_SIZE, 10, &uart_2_queue, 0);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "UART driver install failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
-    // Enable pattern detection interrupt — fires a UART_PATTERN_DET event
-    // every time EOF_BYTE (0x55) is received, signaling end of a packet
+    // 4. Enable pattern detection interrupt — fires UART_PATTERN_DET event on EOF_BYTE (0x55) 
+    //    Signals end of packet to the UART RX task
     uart_enable_pattern_det_baud_intr(UART_NUM2, EOF_BYTE, 1, 9, 0, 0);
 
-    // Allocate internal queue to store positions of detected EOF pattern bytes
-    // Holds up to 20 pattern positions before oldest is discarded
+    // 5. Allocate pattern queue - stores positions of upto 20 detected EOF bytes - oldest is discarded
     uart_pattern_queue_reset(UART_NUM2, 20);
 
-    // Flush any garbage bytes that may have arrived during initialization
+    // 6. Flush any garbage bytes arrived during initialization
     uart_flush(UART_NUM2);
+
+    ESP_LOGI(TAG, "UART2 initialized\n");
     
-    return ret;
+    return ESP_OK;
 }
 

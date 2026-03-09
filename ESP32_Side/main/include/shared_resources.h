@@ -6,11 +6,9 @@
  * @brief Shared constants, macros, and type definitions used across all UART transport layer modules.
 */
 
-#include "FreeRTOS.h"
-#include "queue.h"
-#include <stdio.h>
-
-#define LOG(fmt, ...)  printf( (fmt "\n\r"), ##__VA_ARGS__)      // Format for printf
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include <stdint.h>
 
 /* ---  These are agreed on by both sides  --- */
 #define SOF_BYTE             0xAA        // Start of frame delimiter
@@ -30,34 +28,45 @@
 #define MAX_PAYLOAD_SIZE     64          // Maximum size of payload sent by STM32
 /* ---  These are agreed on by both sides  --- */
 
-#define TX_QUEUE_LENGTH      20
-#define RX_QUEUE_LENGTH      20
-#define RX_MSG_MAX_LEN       256
+extern QueueHandle_t tx_queue;
+extern QueueHandle_t rx_queue;
 
-#define MAX_MESSAGE_SIZE    256
+/* --- From ESP32 to STM32 --- */
 
-extern QueueHandle_t    xTXQueue;
-extern QueueHandle_t    xRXQueue;
-
-typedef struct __attribute__((packed)) {
-    uint16_t temperature;
-    uint16_t pressure;
-} SensorData_t;
-
-typedef struct {
-    SensorData_t sensorData;
-} TXQueue_Item_t;
-
+// Commands sent to STM32 Sensor Node from ESP32 Gateway Node
 typedef enum {
     CMD_START_OTA       = 0x01,
     CMD_SET_THRESHOLD   = 0x02,
 } CommandCode_t;
 
+// Item on the TXQueue
 typedef struct __attribute__((packed)) {
-    uint8_t         seq;
     uint8_t         type;
     CommandCode_t   code;
-} RXQueue_Item_t;
+} TXQueue_Item_t;
+
+// TX sends to STM32 Sensor Node
+typedef struct {
+    uint8_t  sof;
+    uint8_t  version;
+    uint8_t  device_id;
+    uint8_t  seq_num;
+    uint8_t  type;
+    uint16_t crc;
+    uint8_t  eof;
+} UART_Handshake_Packet_t;
+
+// TX sends to STM32 Sensor Node
+typedef struct {
+    uint8_t  sof;
+    uint8_t  version;
+    uint8_t  device_id;
+    uint8_t  seq_num;
+    uint8_t  type;
+    uint8_t  code;
+    uint16_t crc;
+    uint8_t  eof;
+} UART_Command_Packet_t;
 
 /**
  * @brief UART packet type identifiers.
@@ -71,27 +80,16 @@ typedef enum {
     PKT_COMMAND_ACK   = 0x05,
 } UART_PacketType_t;
 
-typedef struct {
-    uint8_t  sof;
-    uint8_t  version;
-    uint8_t  device_id;
-    uint8_t  seq_num;
-    uint8_t  type;
-    uint16_t crc;
-    uint8_t  eof;
-} UART_Handshake_Packet_t;
+typedef struct __attribute__((packed)) {
+    uint16_t    temperature;
+    uint16_t    pressure;
+} SensorData_t;
 
 typedef struct {
-    uint8_t  sof;
-    uint8_t  version;
-    uint8_t  device_id;
-    uint8_t  seq_num;
-    uint8_t  type;
-    uint8_t  length;
-    uint8_t  payload[MAX_PAYLOAD_SIZE];
-    uint16_t crc;
-    uint8_t  eof;
-} UART_Data_Packet_t;
+    uint8_t     seq;
+    uint8_t     type;
+    uint8_t     payload[MAX_PAYLOAD_SIZE];
+} RXQueue_Item_t;
 
 typedef struct {
     uint8_t  sof;
@@ -101,7 +99,10 @@ typedef struct {
     uint8_t  eof;
 } UART_ACK_Packet_t;
 
-// Future addition - Send different type of data
+
+
+
+// Future addition - Receive both messages & data from STM32
 typedef enum {
     MSG_HEARTBEAT               = 0x01,   // STM32 alive and running
     MSG_FIRMWARE_UPDATE_OK      = 0x02,   // OTA flash succeeded
@@ -114,8 +115,19 @@ typedef struct __attribute__((packed)) {
 } MessageData_t;
 
 typedef enum {
-    TX_PAYLOAD_SENSOR_DATA    = 0x01,
-    TX_PAYLOAD_MESSAGE_DATA   = 0x02,
-} TX_PayloadType_t;
+    RX_PAYLOAD_SENSOR_DATA    = 0x01,
+    RX_PAYLOAD_MESSAGE_DATA   = 0x02,
+} RX_PayloadType_t;
+
+
+
+
+
+
+
+
+
+
+
 
 #endif      // SHARED_RESOURCES_H_

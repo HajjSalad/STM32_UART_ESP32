@@ -1,2 +1,13 @@
-idf_component_register(SRCS "main.c" "uart_driver.c" "uart_rxtx_task.c" "crc_16.c"
-                    INCLUDE_DIRS ".")
+idf_component_register(
+    SRCS 
+        "crc_16.c"
+        "main.c" 
+        "queue_push_task.c"
+        "uart_driver.c"
+        "uart_router_task.c"
+        "uart_rx_task.c"
+        "uart_tx_task.c"
+    INCLUDE_DIRS 
+        "."
+        "include"
+)

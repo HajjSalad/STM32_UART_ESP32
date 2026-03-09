@@ -18,6 +18,12 @@ C_SOURCES = Src/main.c \
 			Src/uart_rx.c \
 			Src/crc_16.c 
 
+# Source files directory
+C_SOURCES = $(wildcard Src/*.c) \
+            $(wildcard FreeRTOS/Source/*.c) \
+            $(wildcard FreeRTOS/Source/portable/GCC/ARM_CM4F/*.c) \
+            FreeRTOS/Source/portable/MemMang/heap_4.c
+
 # ASM sources
 ASM_SOURCES = Startup/startup_stm32f446retx.s
 
@@ -35,8 +41,13 @@ MCU = $(CPU) -mthumb $(FPU) $(FLOAT_ABI)
 
 # C inlcudes
 C_INCLUDES = -IInc \
+             -IInc/tasks \
+             -IInc/core \
              -IInc/CMSIS/Core/Include \
-             -IInc/STM32F4xx/Include
+             -IInc/STM32F4xx/Include \
+             -IFreeRTOS/Source/include \
+             -IFreeRTOS/Source/portable/GCC/ARM_CM4F \
+             -IFreeRTOS
 
 # C defines
 C_DEFS = -DSTM32F446xx \

@@ -7,8 +7,8 @@
 
 #include "stm32f446xx.h"
 #include "systick.h"
-#include "uart_rx.h"
 #include "uart_driver.h"
+#include "uart_router.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -67,6 +67,14 @@ void uart1_init(void)
  * 
  * Blocks until the transmit register is empty.
  * 
+ * DR is only 8bits wide for transmission and transmits 1 byte. Using uint16_t or 
+ * uint32_t, the upper limits will be ignored. So need to make sure uint8_t is transmitted.
+ * 
+ * Send will be responsible for breaking down multi-byte data into byte for uart1_write to
+ * transmit byte by byte.
+ * 
+ * @ref RM0390 USART_DR
+ * 
  * @param byte  Byte to transmit.
 */
 void uart1_write(uint8_t byte) 
@@ -84,7 +92,7 @@ void uart1_write(uint8_t byte)
 void USART1_IRQHandler(void)
 {
 	if (USART1->SR & CR1_RXNE) {
-		uart_rx_push_byte((uint8_t)(USART1->DR & 0xFF));
+		uart_isr_push_byte((uint8_t)(USART1->DR & 0xFF));
 	}
 }
 
